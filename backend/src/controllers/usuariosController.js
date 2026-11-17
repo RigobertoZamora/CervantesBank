@@ -61,24 +61,7 @@ export const getUsuarioById = async (req, res) => {
 // POST /api/usuarios -> Validación, sanitización y creación políglota atómica
 export const createUsuario = async (req, res) => {
   const t = await sequelize.transaction();
-  // Busca incluso entre cuentas eliminadas lógicamente (ignora defaultScope)
-  const registroExistente = await Usuario.unscoped().findOne({
-    where: {
-      [Op.or]: [{ rfc }, { email }],
-    },
-  });
-
-  if (registroExistente) {
-    await t.rollback();
-    if (registroExistente.isDeleted || registroExistente.estatus === 0) {
-      return res.status(403).json({
-        error: 'Este RFC o correo pertenece a una cuenta cancelada o suspendida. Comunícate con administración para solicitar su reactivación.',
-      });
-    }
-    return res.status(409).json({
-      error: 'El RFC o el correo electrónico ya están registrados.',
-    });
-  }
+  
   try {
     // Sanitización de entradas (Punto 15)
     const nombre = sanitizarTexto(req.body.nombre);
@@ -127,7 +110,24 @@ export const createUsuario = async (req, res) => {
         error: 'La contraseña debe tener al menos 8 caracteres.',
       });
     }
+    // Busca incluso entre cuentas eliminadas lógicamente (ignora defaultScope)
+  const registroExistente = await Usuario.unscoped().findOne({
+    where: {
+      [Op.or]: [{ rfc }, { email }],
+    },
+  });
 
+    if (registroExistente) {
+      await t.rollback();
+      if (registroExistente.isDeleted || registroExistente.estatus === 0) {
+        return res.status(403).json({
+          error: 'Este RFC o correo pertenece a una cuenta cancelada o suspendida. Comunícate con administración para solicitar su reactivación.',
+        });
+      }
+      return res.status(409).json({
+        error: 'El RFC o el correo electrónico ya están registrados.',
+      });
+    }
     const passwordHash = await bcrypt.hash(password, 12);
     // 1. Transacción Relacional (PostgreSQL) con valores controlados por el servidor (Punto 8)
     const nuevoUsuario = await Usuario.create(
