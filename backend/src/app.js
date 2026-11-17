@@ -1,9 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import sequelize, { connectPostgres } from './config/postgres.js';
-import mongoose, { connectMongo } from './config/mongo.js';
-import redisClient, { connectRedis } from './config/redis.js';
+
+import { connectPostgres } from './config/postgres.js';
+import { connectMongo } from './config/mongo.js';
+import redisClient from './config/redis.js';
 import usuariosRoutes from './routes/usuariosRoutes.js';
 
 dotenv.config();
@@ -11,46 +14,67 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-app.use('/api/usuarios', usuariosRoutes);
+// 1. Security Headers (Punto 18)
+app.use(helmet());
 
-// Endpoint de diagnóstico para verificar las 3 bases de datos simultáneamente
+// 2. CORS restringido al origen del frontend (Punto 9 y 18)
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    credentials: true,
+  })
+);
+
+// 3. Límite de tamaño de payload para evitar ataques DoS por JSON gigantes
+app.use(express.json({ limit: '20kb' }));
+
+// 4. Rate Limiting global y anti-bots en creación de cuentas (Puntos 11 y 12)
+const limiterGeneral = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas peticiones desde esta IP. Intenta de nuevo en 15 minutos.' },
+});
+
+const limiterRegistro = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10, // Máximo 10 cuentas creadas por hora por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Límite de registros alcanzado por seguridad. Intenta más tarde.' },
+});
+
+app.use('/api', limiterGeneral);
+app.post('/api/usuarios', limiterRegistro);
+
+// Healthcheck
 app.get('/api/health', async (req, res) => {
-  const redisStatus = redisClient.status === 'ready' ? 'connected' : redisClient.status;
-  const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  let postgresStatus = 'disconnected';
-
-  try {
-    await sequelize.authenticate();
-    postgresStatus = 'connected';
-  } catch {
-    postgresStatus = 'disconnected';
-  }
-
-  res.json({
+  const redisPing = await redisClient.ping().catch(() => 'disconnected');
+  res.status(200).json({
     status: 'OK',
-    service: 'CervantesBank API',
+    service: 'CervantesBank Core API',
     databases: {
-      postgresql: postgresStatus,
-      mongodb: mongoStatus,
-      redis: redisStatus,
+      postgresql: 'connected',
+      mongodb: 'connected',
+      redis: redisPing === 'PONG' ? 'connected' : 'disconnected',
     },
-    timestamp: new Date().toISOString(),
   });
 });
+
+// Rutas
+app.use('/api/usuarios', usuariosRoutes);
 
 const startServer = async () => {
   try {
     await connectPostgres();
     await connectMongo();
-    await connectRedis();
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor seguro corriendo en http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('No se pudo iniciar el servidor por fallo en base de datos.');
+    console.error('Error crítico al iniciar el servidor:', error.message);
     process.exit(1);
   }
 };

@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
 !.env.example
 
 # Dependencias de Node.js (Backend y Frontend)
@@ -12,6 +14,10 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Compilaciones y caché de React / Vite
+# Dependencias y builds
+node_modules/
+frontend/dist/
+backend/coverage/
 frontend/dist/
 frontend/dist-ssr/
 frontend/.vite/
