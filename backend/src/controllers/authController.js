@@ -7,6 +7,7 @@ import Cuenta from '../models/sql/Cuenta.js';
 import ExpedienteKYC from '../models/mongo/ExpedienteKYC.js';
 import redisClient from '../config/redis.js';
 import { BloqueoAntifraudeModel } from '../models/redis/BloqueoAntifraude.js';
+import { registrarAcceso } from '../services/actividadService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'cervantesbank_clave_jwt_2026';
 const MAX_INTENTOS = 3;
@@ -99,6 +100,12 @@ export const loginUsuario = async (req, res) => {
         ...datosSesion,
       });
 
+      await registrarAcceso(usuario.id, {
+        accion: 'LOGIN_FALLIDO',
+        motivo: registroFallo.motivo,
+        ...datosSesion,
+      });
+
       return res.status(debeBloquearse ? 423 : 401).json({
         error: debeBloquearse
           ? 'Cuenta bloqueada por seguridad tras 3 intentos fallidos.'
@@ -115,6 +122,12 @@ export const loginUsuario = async (req, res) => {
       bloqueado: false,
       tokenJti: jti,
       sesionActiva: true,
+      accion: 'LOGIN_EXITOSO',
+      motivo: 'Inicio de sesión verificado correctamente',
+      ...datosSesion,
+    });
+
+    await registrarAcceso(usuario.id, {
       accion: 'LOGIN_EXITOSO',
       motivo: 'Inicio de sesión verificado correctamente',
       ...datosSesion,
@@ -224,6 +237,12 @@ export const logoutUsuario = async (req, res) => {
           accion: 'LOGOUT',
           motivo: 'Sesión cerrada explícitamente por el usuario',
           fechaEvento: new Date().toISOString(),
+        });
+        await registrarAcceso(payload.id, {
+          accion: 'LOGOUT',
+          motivo: 'Sesión cerrada explícitamente por el usuario',
+          ipSospechosa: req.ip || req.socket?.remoteAddress || '',
+          dispositivo: (req.headers['user-agent'] || '').slice(0, 120),
         });
       } catch {
         // Si el token ya había expirado, continuamos limpiando la cookie

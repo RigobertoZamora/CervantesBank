@@ -57,6 +57,53 @@ export const cerrarSesion = async () => {
   return data;
 };
 
+// --- CUENTA Y TRANSFERENCIAS (CLIENTE) ---
+
+export const obtenerResumenCuenta = async () => {
+  const response = await fetch(`${API_URL}/cuentas/resumen`, {
+    method: 'GET',
+    credentials: 'include', // Envía la cookie HttpOnly cb_token al servidor
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo consultar el saldo.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+export const realizarTransferencia = async (datos) => {
+  const response = await fetch(`${API_URL}/transferencias`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(datos),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo realizar la transferencia.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+export const consultarBeneficiario = async (clabe) => {
+  const response = await fetch(`${API_URL}/transferencias/beneficiario?clabe=${encodeURIComponent(clabe)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || data.mensaje || 'No se pudo validar la CLABE.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
 // --- MÓDULO DE PRÉSTAMOS Y APELACIONES (CLIENTE) ---
 
 export const obtenerEvaluacionPrestamos = async () => {
@@ -154,6 +201,111 @@ export const resolverApelacionAdmin = async (
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.error || 'Error al resolver la apelación.');
+  }
+  return data;
+};
+
+// --- TRANSACCIONES (CLIENTE): historial y detalle desde AuditoriaTransacciones ---
+
+export const obtenerTransacciones = async ({ pagina = 1, limite = 20 } = {}) => {
+  const response = await fetch(`${API_URL}/transacciones?pagina=${pagina}&limite=${limite}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo consultar el historial de transacciones.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+export const obtenerDetalleTransaccion = async (id) => {
+  const response = await fetch(`${API_URL}/transacciones/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'No se pudo consultar el detalle de la transacción.');
+  }
+  return data;
+};
+
+// --- HISTORIAL DE ACTIVIDAD DE LA CUENTA (accesos, solicitudes, KYC; no son transacciones) ---
+
+export const obtenerActividad = async ({ limite = 30 } = {}) => {
+  const response = await fetch(`${API_URL}/actividad?limite=${limite}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo consultar el historial de actividad.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+// --- PAGO DE PRÉSTAMOS (CLIENTE) ---
+
+export const obtenerPrestamosPagables = async () => {
+  const response = await fetch(`${API_URL}/pagos-prestamo`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudieron consultar tus préstamos.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+export const pagarPrestamo = async ({ idPrestamo, monto }) => {
+  const response = await fetch(`${API_URL}/pagos-prestamo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ idPrestamo, monto }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.error || 'No se pudo realizar el pago.');
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+};
+
+// --- ADMIN: MOVIMIENTOS (segunda capa de "Gestionar Cuentas") ---
+
+export const obtenerMovimientosAdmin = async ({ usuarioId, tipo, pagina = 1, limite = 20 } = {}) => {
+  const params = new URLSearchParams({ pagina, limite });
+  if (usuarioId) params.set('usuarioId', usuarioId);
+  if (tipo) params.set('tipo', tipo);
+  const response = await fetch(`${API_URL}/admin-movimientos?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'No se pudieron consultar los movimientos.');
+  }
+  return data;
+};
+
+export const obtenerDetalleMovimientoAdmin = async (id) => {
+  const response = await fetch(`${API_URL}/admin-movimientos/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'No se pudo consultar el detalle del movimiento.');
   }
   return data;
 };

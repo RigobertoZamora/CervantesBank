@@ -5,7 +5,7 @@ const auditoriaTransaccionSchema = new mongoose.Schema({
   cuentaDestinoId: { type: Number, default: null },
   tipoMovimiento: {
     type: String,
-    enum: ['TRANSFERENCIA', 'PAGO_PRESTAMO', 'DEPOSITO', 'INTERES_PRESTAMO', 'INGRESO_PRESTAMO', 'SOLICITUD_PRESTAMO'], // Nuevo: registra solicitudes rechazadas o en apelación
+    enum: ['TRANSFERENCIA', 'PAGO_PRESTAMO', 'DEPOSITO', 'INTERES_PRESTAMO', 'INGRESO_PRESTAMO', 'SOLICITUD_PRESTAMO', 'CANCELACION_CUENTA'],
     required: true,
   },
   monto: { type: Number, required: true },

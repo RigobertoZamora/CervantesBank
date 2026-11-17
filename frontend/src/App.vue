@@ -3,8 +3,9 @@ import { onMounted, ref } from 'vue';
 import BrandShowcase from './components/auth/BrandShowcase.vue';
 import RegistroForm from './components/auth/RegistroForm.vue';
 import LoginView from './components/auth/LoginView.vue';
-import DashboardView from './components/dashboard/DashboardView.vue';
 import AdminPanelView from './components/admin/AdminPanelView.vue';
+import ClienteApp from './components/cliente/ClienteApp.vue';
+import CancelacionFinalView from './components/cliente/CancelacionFinalView.vue';
 import { obtenerPerfilSesion } from './services/api';
 
 const vista = ref('login');
@@ -12,6 +13,7 @@ const emailRecienCreado = ref('');
 const logoNoEncontrado = ref(false);
 const sesionActiva = ref(null);
 const verificandoSesion = ref(true);
+const cuentaCancelada = ref(false);
 
 onMounted(async () => {
   try {
@@ -32,6 +34,8 @@ const irALoginConCorreo = (email) => {
 const manejarLoginExitoso = (datosSesion) => {
   sesionActiva.value = datosSesion;
 };
+
+const manejarCancelacionCuenta = () => { sesionActiva.value = null; cuentaCancelada.value = true; };
 
 const manejarLogout = () => {
   sesionActiva.value = null;
@@ -69,11 +73,14 @@ const manejarLogout = () => {
       @sesion-cerrada="manejarLogout"
     />
 
-    <DashboardView
+    <ClienteApp
       v-else-if="sesionActiva"
       :sesion="sesionActiva"
       @sesion-cerrada="manejarLogout"
+      @cuenta-cancelada="manejarCancelacionCuenta"
     />
+
+    <CancelacionFinalView v-else-if="cuentaCancelada" />
 
     <main v-else class="landing-grid">
       <BrandShowcase />

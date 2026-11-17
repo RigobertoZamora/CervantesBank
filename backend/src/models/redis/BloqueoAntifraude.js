@@ -23,19 +23,38 @@ export const BloqueoAntifraudeModel = {
     return data.isDeleted ? null : data;
   },
 
+  
   async save(cuentaId, payload) {
     const registro = {
       cuentaId: Number(cuentaId),
-      intentosFallidos: payload.intentosFallidos ?? 1,
+
+      // Control antifraude
+      intentosFallidos: payload.intentosFallidos ?? 0,
       bloqueado: payload.bloqueado ?? false,
+
+      // Control de sesión JWT
+      tokenJti: payload.tokenJti ?? '',
+      sesionActiva: payload.sesionActiva ?? false,
+
+      // Información del evento
+      accion: payload.accion || 'SIN_ACCION',
       motivo: payload.motivo || 'Actividad sospechosa',
       ipSospechosa: payload.ipSospechosa || '0.0.0.0',
+      dispositivo: payload.dispositivo || 'Desconocido',
+      fechaEvento: payload.fechaEvento || new Date().toISOString(),
+
       fechaActualizacion: new Date().toISOString(),
       isDeleted: false,
     };
-    await redisClient.set(`${PREFIX}${cuentaId}`, JSON.stringify(registro));
+
+    await redisClient.set(
+      `${PREFIX}${cuentaId}`,
+      JSON.stringify(registro)
+    );
+
     return registro;
   },
+
 
   async softDelete(cuentaId) {
     const raw = await redisClient.get(`${PREFIX}${cuentaId}`);
