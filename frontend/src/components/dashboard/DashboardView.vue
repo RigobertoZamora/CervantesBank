@@ -1,7 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { cerrarSesion } from '../../services/api';
-import PrestamosClienteSection from './PrestamosClienteSection.vue';
+import { computed, ref } from 'vue';
+import CancelacionCuenta from '../cuenta/CancelacionCuenta.vue';
 
 const props = defineProps({
   sesion: {
@@ -10,22 +9,8 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['sesion-cerrada']);
-
 const copiando = ref(false);
-const cerrando = ref(false);
-const saldoActual = ref(Number(props.sesion.cuenta?.saldo || 0));
-
-watch(
-  () => props.sesion.cuenta?.saldo,
-  (nuevo) => {
-    saldoActual.value = Number(nuevo || 0);
-  }
-);
-
-const actualizarSaldo = (nuevoSaldo) => {
-  saldoActual.value = Number(nuevoSaldo);
-};
+const emit = defineEmits(['cuenta-cancelada']);
 
 const nombreCompleto = computed(() => {
   const u = props.sesion.usuario;
@@ -44,22 +29,13 @@ const copiarClabe = async () => {
   }, 2000);
 };
 
-const handleLogout = async () => {
-  cerrando.value = true;
-  try {
-    await cerrarSesion();
-  } catch {
-    // Limpiamos la vista local incluso si el backend ya había invalidado la cookie
-  } finally {
-    cerrando.value = false;
-    emit('sesion-cerrada');
-  }
-};
+
 </script>
 
 <template>
-  <section class="dashboard-shell">
-    <div class="dashboard-header">
+  <section class="dashboard-shell profile-view">
+    <!-- Encabezado del cliente -->
+    <div class="dashboard-header profile-heading cl-fade-up">
       <div>
         <span class="hero-eyebrow" style="margin-bottom: 0.45rem">
           Cliente #{{ sesion.usuario.id }} · RFC {{ sesion.usuario.rfc }}
@@ -72,18 +48,12 @@ const handleLogout = async () => {
         </p>
       </div>
 
-      <button
-        type="button"
-        class="btn-secondary"
-        :disabled="cerrando"
-        @click="handleLogout"
-      >
-        {{ cerrando ? 'Cerrando...' : 'Cerrar Sesión' }}
-      </button>
     </div>
 
-    <div class="dashboard-grid">
-      <div class="bank-card">
+    <!-- Grid principal de 2 columnas -->
+    <div class="dashboard-grid profile-grid">
+      <!-- Tarjeta 1: Cuenta bancaria (PostgreSQL) -->
+      <div class="bank-card profile-card cl-fade-up">
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600">
             CUENTA DIGITAL EN PESOS
@@ -94,7 +64,7 @@ const handleLogout = async () => {
         <div style="margin: 1.15rem 0">
           <div style="font-size: 0.78rem; color: var(--text-secondary)">SALDO DISPONIBLE</div>
           <div style="font-size: 2.15rem; font-weight: 700; letter-spacing: -0.03em">
-            ${{ saldoActual.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
+            ${{ Number(sesion.cuenta?.saldo || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
             <span style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 500">MXN</span>
           </div>
         </div>
@@ -121,8 +91,9 @@ const handleLogout = async () => {
         </div>
       </div>
 
-      <div class="form-grid">
-        <div class="bank-card">
+      <!-- Tarjeta 2: Estatus KYC (MongoDB) + Sesión Antifraude (Redis) -->
+      <div class="form-grid profile-side-grid">
+        <div class="bank-card profile-card cl-fade-up">
           <div style="display: flex; justify-content: space-between; align-items: center">
             <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600">
               VERIFICACIÓN DE IDENTIDAD (KYC)
@@ -142,7 +113,7 @@ const handleLogout = async () => {
           </p>
         </div>
 
-        <div class="bank-card">
+        <div class="bank-card profile-card cl-fade-up">
           <div style="display: flex; justify-content: space-between; align-items: center">
             <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600">
               SEGURIDAD DE SESIÓN ACTIVA
@@ -182,9 +153,7 @@ const handleLogout = async () => {
           </div>
         </div>
       </div>
+      <CancelacionCuenta @cuenta-cancelada="emit('cuenta-cancelada')" />
     </div>
-
-    <!-- Módulo integrado de Solicitud de Préstamos y Apelaciones -->
-    <PrestamosClienteSection @saldo-actualizado="actualizarSaldo" />
   </section>
 </template>

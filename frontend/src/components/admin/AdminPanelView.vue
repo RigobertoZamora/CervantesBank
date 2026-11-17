@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
+import MainLayout from '../cliente/MainLayout.vue';
 import {
   cerrarSesion,
   obtenerResumenAdmin,
@@ -108,28 +109,31 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <section class="dashboard-shell">
+  <MainLayout etiqueta="Administrador">
+    <template #acciones>
+      <button type="button" class="cl-nav-action" @click="cargarPanel">
+        <span class="cl-nav-action-mark" aria-hidden="true"></span>
+        Actualizar datos
+      </button>
+      <button type="button" class="cl-nav-action cl-nav-action--danger" :disabled="cerrando" @click="handleLogout">
+        <span class="cl-nav-action-mark" aria-hidden="true"></span>
+        {{ cerrando ? 'Saliendo...' : 'Cerrar Sesión' }}
+      </button>
+    </template>
+
+  <section class="dashboard-shell profile-view">
     <!-- Encabezado de Administrador Único -->
-    <div class="dashboard-header">
+    <div class="dashboard-header profile-heading cl-fade-up">
       <div>
         <span class="hero-eyebrow" style="margin-bottom: 0.45rem">
           Administrador Único · Sin creación de perfiles admin adicionales
         </span>
-        <h1 style="font-size: 1.65rem; font-weight: 700">
+        <h1 style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em">
           Consola Central de Supervisión Políglota
         </h1>
         <p style="color: var(--text-secondary); font-size: 0.88rem">
           Sesión administrativa: {{ sesion.usuario.nombre }} ({{ sesion.usuario.email }})
         </p>
-      </div>
-
-      <div style="display: flex; gap: 0.65rem; flex-wrap: wrap">
-        <button type="button" class="btn-secondary" @click="cargarPanel">
-          Actualizar datos
-        </button>
-        <button type="button" class="btn-secondary" :disabled="cerrando" @click="handleLogout">
-          {{ cerrando ? 'Saliendo...' : 'Cerrar Sesión' }}
-        </button>
       </div>
     </div>
 
@@ -143,29 +147,29 @@ const handleLogout = async () => {
 
     <!-- Barra de KPIs consolidados (SQL + MongoDB + Redis) -->
     <div class="kpi-row">
-      <div class="bank-card kpi-box">
+      <div class="bank-card profile-card cl-fade-up kpi-box">
         <span class="telemetry-label">Clientes Registrados</span>
         <div class="kpi-number">{{ resumen.kpis.totalClientes }}</div>
       </div>
-      <div class="bank-card kpi-box">
+      <div class="bank-card profile-card cl-fade-up kpi-box">
         <span class="telemetry-label">KYC Pendientes (Mongo)</span>
         <div class="kpi-number" style="color: var(--status-warning)">
           {{ resumen.kpis.kycPendientes }}
         </div>
       </div>
-      <div class="bank-card kpi-box">
+      <div class="bank-card profile-card cl-fade-up kpi-box">
         <span class="telemetry-label">Apelaciones Prioritarias</span>
         <div class="kpi-number" style="color: var(--accent-orange)">
           {{ resumen.kpis.apelacionesPendientes }}
         </div>
       </div>
-      <div class="bank-card kpi-box">
+      <div class="bank-card profile-card cl-fade-up kpi-box">
         <span class="telemetry-label">Mejor Rendimiento</span>
         <div class="kpi-number" style="color: var(--status-success)">
           {{ resumen.kpis.totalMejoresRendimiento }}
         </div>
       </div>
-      <div class="bank-card kpi-box">
+      <div class="bank-card profile-card cl-fade-up kpi-box">
         <span class="telemetry-label">Peores Morosos</span>
         <div class="kpi-number" style="color: var(--status-danger)">
           {{ resumen.kpis.totalPeoresMorosos }}
@@ -176,7 +180,7 @@ const handleLogout = async () => {
     <!-- ===================================================================== -->
     <!-- APARTADO 1 (MISMA CAPA): GESTIONAR LÍNEAS DE CRÉDITO Y PRÉSTAMOS      -->
     <!-- ===================================================================== -->
-    <div class="bank-card admin-section">
+    <div class="bank-card profile-card cl-fade-up admin-section">
       <div class="admin-section-header">
         <div>
           <span class="hero-eyebrow" style="margin-bottom: 0.35rem">Apartado 1 · PostgreSQL + MongoDB + Redis</span>
@@ -319,7 +323,7 @@ const handleLogout = async () => {
     <!-- ===================================================================== -->
     <div class="dashboard-grid" style="margin-top: 1.5rem">
       <!-- Apartado 2: Validación de Documentación KYC (MongoDB) -->
-      <div class="bank-card">
+      <div class="bank-card profile-card cl-fade-up">
         <span class="hero-eyebrow" style="margin-bottom: 0.35rem">Apartado 2 · MongoDB</span>
         <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.85rem">
           Validación de Documentación KYC
@@ -374,7 +378,7 @@ const handleLogout = async () => {
       </div>
 
       <!-- Apartado 3: Gestionar Cuentas (PostgreSQL + Redis) -->
-      <div class="bank-card">
+      <div class="bank-card profile-card cl-fade-up">
         <span class="hero-eyebrow" style="margin-bottom: 0.35rem">Apartado 3 · PostgreSQL + Redis</span>
         <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.85rem">
           Gestionar Cuentas y Desbloqueo Antifraude
@@ -438,4 +442,5 @@ const handleLogout = async () => {
       </div>
     </div>
   </section>
+  </MainLayout>
 </template>

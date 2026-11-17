@@ -28,7 +28,14 @@ export const getUsuarios = async (req, res) => {
       attributes: ['id', 'nombre', 'apellidoUno', 'apellidoDos', 'email', 'estatus', 'fechaCreacion'],
       order: [['id', 'ASC']],
     });
-    res.status(200).json(usuarios);
+    const expedientes = await ExpedienteKYC.find({
+      usuarioId: { $in: usuarios.map((u) => Number(u.id)) }, isDeleted: false,
+    }).select('usuarioId cancelacionCuenta');
+    const mapa = new Map(expedientes.map((e) => [Number(e.usuarioId), e.cancelacionCuenta]));
+    const resultado = usuarios.map((u) => ({ ...u.toJSON(),
+      cancelacionCuenta: mapa.get(Number(u.id)) || { solicitada: false, prioridadAtencion: 'NORMAL' } }));
+    resultado.sort((a,b) => Number(Boolean(b.cancelacionCuenta?.solicitada))-Number(Boolean(a.cancelacionCuenta?.solicitada)) || Number(a.id)-Number(b.id));
+    res.status(200).json(resultado);
   } catch (error) {
     console.error('Error en getUsuarios:', error);
     res.status(500).json({ error: 'Error interno al consultar usuarios.' });

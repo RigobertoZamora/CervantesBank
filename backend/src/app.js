@@ -14,6 +14,13 @@ import authRoutes from './routes/authRoutes.js';
 import prestamosRoutes from './routes/prestamosRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
+import cuentasRoutes from './routes/cuentasRoutes.js';
+import transferenciasRoutes from './routes/transferenciasRoutes.js';
+import cancelacionRoutes from './routes/cancelacionRoutes.js';
+import transaccionesRoutes from './routes/transaccionesRoutes.js';
+import actividadRoutes from './routes/actividadRoutes.js';
+import pagosPrestamoRoutes from './routes/pagosPrestamoRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -75,6 +82,12 @@ app.get('/api/health', async (req, res) => {
 
 // Rutas
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/cuentas', cuentasRoutes);
+app.use('/api/cuentas', cancelacionRoutes);
+app.use('/api/transferencias', transferenciasRoutes);
+app.use('/api/transacciones', transaccionesRoutes);
+app.use('/api/actividad', actividadRoutes);
+app.use('/api/pagos-prestamo', pagosPrestamoRoutes);
 
 const startServer = async () => {
   try {

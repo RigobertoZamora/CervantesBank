@@ -59,7 +59,12 @@ export const solicitarPrestamo = async (req, res) => {
     const motivoSolicitud =
       typeof req.body.motivoSolicitud === 'string'
         ? req.body.motivoSolicitud.replace(/[<>]/g, '').trim().slice(0, 250)
-        : 'Préstamo personal digital';
+        : '';
+
+    if (motivoSolicitud.length < 5) {
+      await t.rollback();
+      return res.status(400).json({ error: 'Indica el motivo de tu solicitud (mínimo 5 caracteres).' });
+    }
 
     if (!montoSolicitado || montoSolicitado < 500) {
       await t.rollback();
