@@ -4,12 +4,11 @@ import {
   getPerfilAutenticado,
   logoutUsuario,
 } from '../controllers/authController.js';
-import { verificarSesion } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
 router.post('/login', loginUsuario);
-router.get('/me', verificarSesion, getPerfilAutenticado);
-router.post('/logout', verificarSesion, logoutUsuario);
+router.get('/me',  getPerfilAutenticado);
+router.post('/logout', logoutUsuario);
 
 export default router;

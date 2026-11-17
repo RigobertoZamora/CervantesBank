@@ -11,6 +11,8 @@ import usuariosRoutes from './routes/usuariosRoutes.js';
 
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes.js';
+import prestamosRoutes from './routes/prestamosRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -54,6 +56,8 @@ const limiterRegistro = rateLimit({
 app.use('/api', limiterGeneral);
 app.post('/api/usuarios', limiterRegistro);
 app.use('/api/auth', authRoutes);
+app.use('/api/prestamos', prestamosRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Healthcheck
 app.get('/api/health', async (req, res) => {

@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { cerrarSesion } from '../../services/api';
+import PrestamosClienteSection from './PrestamosClienteSection.vue';
 
 const props = defineProps({
   sesion: {
@@ -13,6 +14,18 @@ const emit = defineEmits(['sesion-cerrada']);
 
 const copiando = ref(false);
 const cerrando = ref(false);
+const saldoActual = ref(Number(props.sesion.cuenta?.saldo || 0));
+
+watch(
+  () => props.sesion.cuenta?.saldo,
+  (nuevo) => {
+    saldoActual.value = Number(nuevo || 0);
+  }
+);
+
+const actualizarSaldo = (nuevoSaldo) => {
+  saldoActual.value = Number(nuevoSaldo);
+};
 
 const nombreCompleto = computed(() => {
   const u = props.sesion.usuario;
@@ -35,6 +48,8 @@ const handleLogout = async () => {
   cerrando.value = true;
   try {
     await cerrarSesion();
+  } catch {
+    // Limpiamos la vista local incluso si el backend ya había invalidado la cookie
   } finally {
     cerrando.value = false;
     emit('sesion-cerrada');
@@ -44,7 +59,6 @@ const handleLogout = async () => {
 
 <template>
   <section class="dashboard-shell">
-    <!-- Encabezado del cliente -->
     <div class="dashboard-header">
       <div>
         <span class="hero-eyebrow" style="margin-bottom: 0.45rem">
@@ -68,9 +82,7 @@ const handleLogout = async () => {
       </button>
     </div>
 
-    <!-- Grid principal de 2 columnas -->
     <div class="dashboard-grid">
-      <!-- Tarjeta 1: Cuenta bancaria (PostgreSQL) -->
       <div class="bank-card">
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600">
@@ -82,7 +94,7 @@ const handleLogout = async () => {
         <div style="margin: 1.15rem 0">
           <div style="font-size: 0.78rem; color: var(--text-secondary)">SALDO DISPONIBLE</div>
           <div style="font-size: 2.15rem; font-weight: 700; letter-spacing: -0.03em">
-            ${{ Number(sesion.cuenta?.saldo || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
+            ${{ saldoActual.toLocaleString('es-MX', { minimumFractionDigits: 2 }) }}
             <span style="font-size: 0.95rem; color: var(--text-secondary); font-weight: 500">MXN</span>
           </div>
         </div>
@@ -109,7 +121,6 @@ const handleLogout = async () => {
         </div>
       </div>
 
-      <!-- Tarjeta 2: Estatus KYC (MongoDB) + Sesión Antifraude (Redis) -->
       <div class="form-grid">
         <div class="bank-card">
           <div style="display: flex; justify-content: space-between; align-items: center">
@@ -172,5 +183,8 @@ const handleLogout = async () => {
         </div>
       </div>
     </div>
+
+    <!-- Módulo integrado de Solicitud de Préstamos y Apelaciones -->
+    <PrestamosClienteSection @saldo-actualizado="actualizarSaldo" />
   </section>
 </template>

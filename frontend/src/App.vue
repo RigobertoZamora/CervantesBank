@@ -4,6 +4,7 @@ import BrandShowcase from './components/auth/BrandShowcase.vue';
 import RegistroForm from './components/auth/RegistroForm.vue';
 import LoginView from './components/auth/LoginView.vue';
 import DashboardView from './components/dashboard/DashboardView.vue';
+import AdminPanelView from './components/admin/AdminPanelView.vue';
 import { obtenerPerfilSesion } from './services/api';
 
 const vista = ref('login');
@@ -61,6 +62,12 @@ const manejarLogout = () => {
     <div v-if="verificandoSesion" class="loading-shell">
       Verificando sesión segura...
     </div>
+
+    <AdminPanelView
+      v-else-if="sesionActiva && Number(sesionActiva.usuario?.isAdmin) === 1"
+      :sesion="sesionActiva"
+      @sesion-cerrada="manejarLogout"
+    />
 
     <DashboardView
       v-else-if="sesionActiva"

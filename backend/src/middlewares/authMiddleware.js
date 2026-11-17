@@ -1,11 +1,13 @@
 import jwt from 'jsonwebtoken';
 import redisClient from '../config/redis.js';
+import Usuario from '../models/sql/Usuario.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'cervantesbank_clave_jwt_2026';
 
 const leerAntifraudeRedis = async (usuarioId) => {
   const key = `fraude:cuenta:${usuarioId}`;
   const tipo = await redisClient.type(key);
+
   if (tipo === 'string') {
     const raw = await redisClient.get(key);
     return raw ? JSON.parse(raw) : null;
@@ -30,13 +32,11 @@ export const verificarSesion = async (req, res, next) => {
 
     const payload = jwt.verify(token, JWT_SECRET);
     const estadoRedis = await leerAntifraudeRedis(payload.id);
-
     const estaBloqueado = estadoRedis?.bloqueado === true || estadoRedis?.bloqueado === 'true';
-    const sesionValida = estadoRedis?.sesionActiva === true || estadoRedis?.sesionActiva === 'true';
 
-    if (!estadoRedis || estaBloqueado || !sesionValida || estadoRedis.tokenJti !== payload.jti) {
-      return res.status(401).json({
-        error: 'Tu sesión fue revocada, expiró o la cuenta fue bloqueada por seguridad.',
+    if (estaBloqueado) {
+      return res.status(423).json({
+        error: 'La cuenta fue bloqueada por seguridad.',
       });
     }
 
@@ -44,5 +44,19 @@ export const verificarSesion = async (req, res, next) => {
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Sesión inválida o expirada. Inicia sesión nuevamente.' });
+  }
+};
+
+export const verificarAdmin = async (req, res, next) => {
+  try {
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario || usuario.estatus !== 1 || Number(usuario.isAdmin) !== 1) {
+      return res.status(403).json({
+        error: 'Acceso denegado: operación exclusiva del administrador único.',
+      });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al verificar permisos de administrador.' });
   }
 };

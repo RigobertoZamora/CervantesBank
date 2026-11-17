@@ -138,6 +138,7 @@ export const createUsuario = async (req, res) => {
         rfc,
         email,
         password: passwordHash,
+        isAdmin: 0, // 0 = Cliente, 1 = Administrador único
         estatus: 1,
         isDeleted: false,
       },

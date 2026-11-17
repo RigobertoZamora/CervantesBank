@@ -5,11 +5,11 @@ const auditoriaTransaccionSchema = new mongoose.Schema({
   cuentaDestinoId: { type: Number, default: null },
   tipoMovimiento: {
     type: String,
-    enum: ['TRANSFERENCIA', 'PAGO_PRESTAMO', 'DEPOSITO', 'INTERES_PRESTAMO', 'INGRESO_PRESTAMO'],
+    enum: ['TRANSFERENCIA', 'PAGO_PRESTAMO', 'DEPOSITO', 'INTERES_PRESTAMO', 'INGRESO_PRESTAMO', 'SOLICITUD_PRESTAMO'], // Nuevo: registra solicitudes rechazadas o en apelación
     required: true,
   },
   monto: { type: Number, required: true },
-  estatus: { type: String, enum: ['EXITOSA', 'RECHAZADA'], default: 'EXITOSA' },
+  estatus: { type: String, enum: ['EXITOSA', 'RECHAZADA' , 'EN_APELACION'], default: 'EXITOSA' }, // Nuevo: cola prioritaria para el Admin 
   fechaCreacion: { type: Date, default: Date.now },
   fechaActualizacion: { type: Date, default: Date.now },
   payloadCompleto: { type: mongoose.Schema.Types.Mixed, required: true },

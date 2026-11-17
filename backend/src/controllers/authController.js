@@ -129,7 +129,7 @@ export const loginUsuario = async (req, res) => {
 
     // 6. Emitir JWT vinculado al jti de Redis en cookie HttpOnly
     const token = jwt.sign(
-      { id: Number(usuario.id), email: usuario.email, jti },
+      { id: Number(usuario.id), email: usuario.email, jti, isAdmin: usuario.isAdmin },
       JWT_SECRET,
       { expiresIn: '2h' }
     );
@@ -150,6 +150,7 @@ export const loginUsuario = async (req, res) => {
         apellidoDos: usuario.apellidoDos,
         rfc: usuario.rfc,
         email: usuario.email,
+        isAdmin: usuario.isAdmin,
       },
       cuenta: cuenta
         ? {
@@ -170,12 +171,24 @@ export const loginUsuario = async (req, res) => {
   }
 };
 
-// GET /api/auth/me -> Devuelve el contexto completo del cliente autenticado
+// GET /api/auth/me -> Consulta silenciosa de sesión (evita 401 en consola al abrir la app)
 export const getPerfilAutenticado = async (req, res) => {
   try {
-    const usuario = await Usuario.findByPk(req.user.id);
-    if (!usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    const token = req.cookies?.cb_token;
+    if (!token) {
+      return res.status(200).json({ autenticado: false, usuario: null });
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(token, JWT_SECRET);
+    } catch {
+      return res.status(200).json({ autenticado: false, usuario: null });
+    }
+
+    const usuario = await Usuario.findByPk(payload.id);
+    if (!usuario || usuario.estatus !== 1) {
+      return res.status(200).json({ autenticado: false, usuario: null });
     }
 
     const cuenta = await Cuenta.findOne({ where: { idUsuario: usuario.id } });
@@ -185,7 +198,8 @@ export const getPerfilAutenticado = async (req, res) => {
     });
     const sesionAntifraude = await leerAntifraudeRedis(usuario.id);
 
-    res.status(200).json({
+    return res.status(200).json({
+      autenticado: true,
       usuario,
       cuenta,
       expedienteKYC: expediente,
@@ -196,29 +210,33 @@ export const getPerfilAutenticado = async (req, res) => {
     res.status(500).json({ error: 'Error interno al verificar la sesión.' });
   }
 };
-    
-// POST /api/auth/logout -> Revoca la sesión en Redis y limpia la cookie HttpOnly
+
+// POST /api/auth/logout -> Siempre limpia la cookie HttpOnly sin fallar si ya expiró
 export const logoutUsuario = async (req, res) => {
   try {
-    if (req.user?.id) {
-      await BloqueoAntifraudeModel.save(req.user.id, {
-        intentosFallidos: 0,
-        bloqueado: false,
-        sesionActiva: false,
-        tokenJti: '',
-        accion: 'LOGOUT',
-        motivo: 'Sesión cerrada explícitamente por el usuario',
-        fechaEvento: new Date().toISOString(),
-      });
+    const token = req.cookies?.cb_token;
+    if (token) {
+      try {
+        const payload = jwt.verify(token, JWT_SECRET);
+        await BloqueoAntifraudeModel.save(payload.id, {
+          intentosFallidos: 0,
+          bloqueado: false,
+          accion: 'LOGOUT',
+          motivo: 'Sesión cerrada explícitamente por el usuario',
+          fechaEvento: new Date().toISOString(),
+        });
+      } catch {
+        // Si el token ya había expirado, continuamos limpiando la cookie
+      }
     }
 
     res.clearCookie('cb_token', {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     });
 
-    res.status(200).json({ mensaje: 'Sesión revocada y cerrada correctamente.' });
+    res.status(200).json({ mensaje: 'Sesión cerrada correctamente.' });
   } catch (error) {
     console.error('Error en logoutUsuario:', error);
     res.status(500).json({ error: 'Error interno al cerrar sesión.' });
