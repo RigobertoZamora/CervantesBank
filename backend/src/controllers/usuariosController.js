@@ -3,6 +3,8 @@ import Usuario from '../models/sql/Usuario.js';
 import Cuenta from '../models/sql/Cuenta.js';
 import ExpedienteKYC from '../models/mongo/ExpedienteKYC.js';
 import { BloqueoAntifraudeModel } from '../models/redis/BloqueoAntifraude.js';
+import bcrypt from 'bcryptjs';
+import { Op } from 'sequelize'
 
 // Expresiones regulares de validación (Punto 14)
 const RFC_REGEX = /^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$/;
@@ -59,7 +61,24 @@ export const getUsuarioById = async (req, res) => {
 // POST /api/usuarios -> Validación, sanitización y creación políglota atómica
 export const createUsuario = async (req, res) => {
   const t = await sequelize.transaction();
+  // Busca incluso entre cuentas eliminadas lógicamente (ignora defaultScope)
+  const registroExistente = await Usuario.unscoped().findOne({
+    where: {
+      [Op.or]: [{ rfc }, { email }],
+    },
+  });
 
+  if (registroExistente) {
+    await t.rollback();
+    if (registroExistente.isDeleted || registroExistente.estatus === 0) {
+      return res.status(403).json({
+        error: 'Este RFC o correo pertenece a una cuenta cancelada o suspendida. Comunícate con administración para solicitar su reactivación.',
+      });
+    }
+    return res.status(409).json({
+      error: 'El RFC o el correo electrónico ya están registrados.',
+    });
+  }
   try {
     // Sanitización de entradas (Punto 15)
     const nombre = sanitizarTexto(req.body.nombre);
@@ -93,7 +112,23 @@ export const createUsuario = async (req, res) => {
 
     const tipoDoc = req.body.metadatosIdentificacion?.tipoDocumento === 'PASAPORTE' ? 'PASAPORTE' : 'INE';
     const numDoc = sanitizarTexto(req.body.metadatosIdentificacion?.numeroDocumento) || 'PENDIENTE_FOLIO';
+    const password = typeof req.body.password === 'string' ? req.body.password : '';
 
+    if (!nombre || !apellidoUno || !rfc || !email || !password) {
+      await t.rollback();
+      return res.status(400).json({
+        error: 'Campos obligatorios faltantes: nombre, apellidoUno, rfc, email y password.',
+      });
+    }
+
+    if (password.length < 8) {
+      await t.rollback();
+      return res.status(400).json({
+        error: 'La contraseña debe tener al menos 8 caracteres.',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
     // 1. Transacción Relacional (PostgreSQL) con valores controlados por el servidor (Punto 8)
     const nuevoUsuario = await Usuario.create(
       {
@@ -102,6 +137,7 @@ export const createUsuario = async (req, res) => {
         apellidoDos: apellidoDos || null,
         rfc,
         email,
+        password: passwordHash,
         estatus: 1,
         isDeleted: false,
       },

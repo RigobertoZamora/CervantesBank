@@ -9,6 +9,9 @@ import { connectMongo } from './config/mongo.js';
 import redisClient from './config/redis.js';
 import usuariosRoutes from './routes/usuariosRoutes.js';
 
+import cookieParser from 'cookie-parser';
+import authRoutes from './routes/authRoutes.js';
+
 dotenv.config();
 
 const app = express();
@@ -29,6 +32,8 @@ app.use(
 // 3. Límite de tamaño de payload para evitar ataques DoS por JSON gigantes
 app.use(express.json({ limit: '20kb' }));
 
+app.use(cookieParser());
+
 // 4. Rate Limiting global y anti-bots en creación de cuentas (Puntos 11 y 12)
 const limiterGeneral = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -48,6 +53,7 @@ const limiterRegistro = rateLimit({
 
 app.use('/api', limiterGeneral);
 app.post('/api/usuarios', limiterRegistro);
+app.use('/api/auth', authRoutes);
 
 // Healthcheck
 app.get('/api/health', async (req, res) => {
