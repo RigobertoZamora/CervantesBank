@@ -10,10 +10,11 @@ const Usuario = sequelize.define('Usuario', {
   email: { type: DataTypes.STRING(50), allowNull: false, unique: true },
   estatus: { type: DataTypes.INTEGER, defaultValue: 1 },
   isDeleted: { type: DataTypes.BOOLEAN, defaultValue: false },
-  fechaCreacion: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW },
-  fechaUpdate: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW }
+  fechaCreacion: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  fechaUpdate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
   tableName: 'usuarios',
+  timestamps: false,
   defaultScope: { where: { isDeleted: false } },
 });
 

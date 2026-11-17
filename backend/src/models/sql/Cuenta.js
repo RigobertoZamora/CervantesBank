@@ -9,10 +9,11 @@ const Cuenta = sequelize.define('Cuenta', {
   clabeInterbancaria: { type: DataTypes.STRING(18), allowNull: false, unique: true },
   estatus: { type: DataTypes.INTEGER, defaultValue: 1 },
   isDeleted: { type: DataTypes.BOOLEAN, defaultValue: false },
-  fechaCreacion: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW },
-  fechaUpdate: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW }
+  fechaCreacion: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  fechaUpdate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
   tableName: 'cuentas',
+  timestamps: false,
   defaultScope: { where: { isDeleted: false } },
 });
 

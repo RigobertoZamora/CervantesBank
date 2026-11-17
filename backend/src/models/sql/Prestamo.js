@@ -13,10 +13,11 @@ const Prestamo = sequelize.define('Prestamo', {
   tasaInteresMensual: { type: DataTypes.DECIMAL(16, 6), allowNull: false },
   estatus: { type: DataTypes.INTEGER, defaultValue: 1 },
   isDeleted: { type: DataTypes.BOOLEAN, defaultValue: false },
-  fechaCreacion: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW },
-  fechaUpdate: { type: DataTypes.DATETIME, defaultValue: DataTypes.NOW }
+  fechaCreacion: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  fechaUpdate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
   tableName: 'prestamos',
+  timestamps: false,
   defaultScope: { where: { isDeleted: false } },
 });
 
