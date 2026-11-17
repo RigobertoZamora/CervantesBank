@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import sequelize, { connectPostgres } from './config/postgres.js';
 import mongoose, { connectMongo } from './config/mongo.js';
 import redisClient, { connectRedis } from './config/redis.js';
+import usuariosRoutes from './routes/usuariosRoutes.js';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/usuarios', usuariosRoutes);
 
 // Endpoint de diagnóstico para verificar las 3 bases de datos simultáneamente
 app.get('/api/health', async (req, res) => {
