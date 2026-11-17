@@ -1579,3 +1579,8 @@ body {
 .pm-card-meta dt { color: var(--text-secondary); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; }
 .pm-card-meta dd { font-size: .82rem; font-weight: 650; font-variant-numeric: tabular-nums; }
 .transfer-stepper button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* Admin: movimientos (segunda capa de Gestionar Cuentas) */
+.tx-arrow.is-neutral { color: var(--accent-orange); }
+.admin-mov-sep { width: 1px; height: 1.4rem; margin: 0 .25rem; background: var(--border-subtle); }
+.admin-mov .tx-main small { overflow-wrap: anywhere; }

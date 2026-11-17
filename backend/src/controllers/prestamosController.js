@@ -237,3 +237,86 @@ export const apelarPrestamo = async (req, res) => {
     res.status(500).json({ error: 'Error al registrar la apelación.' });
   }
 };
+
+// GET /api/prestamos -> Lista préstamos otorgados en PostgreSQL
+export const getPrestamos = async (req, res) => {
+  try {
+    if (Number(req.user.isAdmin) === 1) {
+      const todos = await Prestamo.findAll({ order: [['idPrestamo', 'DESC']] });
+      return res.status(200).json(todos);
+    }
+
+    const cuenta = await Cuenta.findOne({ where: { idUsuario: req.user.id } });
+    if (!cuenta) {
+      return res.status(404).json({ error: 'Cuenta bancaria no encontrada.' });
+    }
+
+    const prestamos = await Prestamo.findAll({
+      where: { idCuenta: cuenta.idCuenta },
+      order: [['idPrestamo', 'DESC']],
+    });
+    res.status(200).json(prestamos);
+  } catch (error) {
+    console.error('Error en getPrestamos:', error);
+    res.status(500).json({ error: 'Error al consultar préstamos.' });
+  }
+};
+
+// PATCH /api/prestamos/:idPrestamo -> Actualiza estatus o fechaVencimiento (ej. simulación de mora)
+export const updatePrestamo = async (req, res) => {
+  try {
+    const { idPrestamo } = req.params;
+    const prestamo = await Prestamo.findByPk(idPrestamo);
+
+    if (!prestamo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado.' });
+    }
+
+    const cuenta = await Cuenta.findByPk(prestamo.idCuenta);
+    if (Number(req.user.isAdmin) !== 1 && Number(cuenta?.idUsuario) !== Number(req.user.id)) {
+      return res.status(403).json({ error: 'No tienes permiso para modificar este préstamo.' });
+    }
+
+    const cambios = { fechaUpdate: new Date() };
+    if (req.body.estatus !== undefined && [0, 1, 2].includes(Number(req.body.estatus))) {
+      cambios.estatus = Number(req.body.estatus);
+    }
+    if (req.body.fechaVencimiento !== undefined) {
+      cambios.fechaVencimiento = new Date(req.body.fechaVencimiento);
+    }
+
+    await prestamo.update(cambios);
+    res.status(200).json({ mensaje: 'Préstamo actualizado correctamente.', prestamo });
+  } catch (error) {
+    console.error('Error en updatePrestamo:', error);
+    res.status(500).json({ error: 'Error al actualizar el préstamo.' });
+  }
+};
+
+// DELETE /api/prestamos/:idPrestamo -> Borrado lógico en PostgreSQL (solo préstamos liquidados)
+export const deletePrestamo = async (req, res) => {
+  try {
+    const { idPrestamo } = req.params;
+    const prestamo = await Prestamo.findByPk(idPrestamo);
+
+    if (!prestamo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado o ya eliminado.' });
+    }
+
+    const cuenta = await Cuenta.findByPk(prestamo.idCuenta);
+    if (Number(req.user.isAdmin) !== 1 && Number(cuenta?.idUsuario) !== Number(req.user.id)) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar este préstamo.' });
+    }
+    if (Number(prestamo.saldoPendiente) > 0) {
+      return res.status(400).json({
+        error: 'No se puede eliminar un préstamo con saldo pendiente por liquidar.',
+      });
+    }
+
+    await prestamo.update({ isDeleted: true, estatus: 0, fechaUpdate: new Date() });
+    res.status(200).json({ mensaje: `Préstamo #${idPrestamo} marcado como borrado lógicamente.` });
+  } catch (error) {
+    console.error('Error en deletePrestamo:', error);
+    res.status(500).json({ error: 'Error al ejecutar borrado lógico del préstamo.' });
+  }
+};

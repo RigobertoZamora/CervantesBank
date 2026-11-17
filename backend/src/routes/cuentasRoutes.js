@@ -1,9 +1,21 @@
 import { Router } from 'express';
-import { getResumenCuenta } from '../controllers/cuentasController.js';
+import {
+  getResumenCuenta,
+  getCuentas,
+  createCuenta,
+  updateCuenta,
+  deleteCuenta,
+} from '../controllers/cuentasController.js';
 import { verificarSesion } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/resumen', verificarSesion, getResumenCuenta);
+router.use(verificarSesion);
+
+router.get('/resumen', getResumenCuenta);
+router.get('/', getCuentas);
+router.post('/', createCuenta);
+router.patch('/:idCuenta', updateCuenta);
+router.delete('/:idCuenta', deleteCuenta);
 
 export default router;

@@ -164,3 +164,124 @@ export const getDetalleTransaccion = async (req, res) => {
     res.status(500).json({ error: 'Error interno al consultar la transacción.' });
   }
 };
+
+// POST /api/transacciones -> Crea un registro de auditoría en MongoDB
+export const createTransaccionAuditoria = async (req, res) => {
+  try {
+    const idCuenta = await obtenerIdCuenta(req);
+    if (!idCuenta) {
+      return res.status(404).json({ error: 'Cuenta bancaria no encontrada.' });
+    }
+
+    const tiposValidos = [
+      'TRANSFERENCIA',
+      'PAGO_PRESTAMO',
+      'DEPOSITO',
+      'INTERES_PRESTAMO',
+      'INGRESO_PRESTAMO',
+      'SOLICITUD_PRESTAMO',
+    ];
+    const tipoMovimiento = tiposValidos.includes(req.body.tipoMovimiento)
+      ? req.body.tipoMovimiento
+      : 'DEPOSITO';
+    const monto = Number(req.body.monto);
+
+    if (!Number.isFinite(monto) || monto < 0) {
+      return res.status(400).json({ error: 'El monto debe ser un número válido mayor o igual a 0.' });
+    }
+
+    const doc = await AuditoriaTransaccion.create({
+      cuentaOrigenId: idCuenta,
+      cuentaDestinoId: req.body.cuentaDestinoId ? Number(req.body.cuentaDestinoId) : null,
+      tipoMovimiento,
+      monto,
+      estatus: ['EXITOSA', 'RECHAZADA', 'EN_APELACION'].includes(req.body.estatus)
+        ? req.body.estatus
+        : 'EXITOSA',
+      payloadCompleto: {
+        usuarioId: Number(req.user.id),
+        concepto:
+          typeof req.body.concepto === 'string'
+            ? req.body.concepto.replace(/[<>]/g, '').trim()
+            : 'Registro de auditoría',
+      },
+      isDeleted: false,
+    });
+
+    res.status(201).json({ mensaje: 'Registro de auditoría creado en MongoDB.', transaccion: doc });
+  } catch (error) {
+    console.error('Error en createTransaccionAuditoria:', error);
+    res.status(500).json({ error: 'Error al crear el registro de auditoría.' });
+  }
+};
+
+// PATCH /api/transacciones/:id -> Actualiza concepto o estatus en MongoDB
+export const updateTransaccionAuditoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Identificador de transacción inválido.' });
+    }
+
+    const idCuenta = await obtenerIdCuenta(req);
+    const filtro =
+      Number(req.user.isAdmin) === 1
+        ? { _id: id }
+        : { _id: id, $or: [{ cuentaOrigenId: idCuenta }, { cuentaDestinoId: idCuenta }] };
+
+    const doc = await AuditoriaTransaccion.findOne(filtro);
+    if (!doc) {
+      return res.status(404).json({ error: 'Transacción no encontrada.' });
+    }
+
+    if (['EXITOSA', 'RECHAZADA', 'EN_APELACION'].includes(req.body.estatus)) {
+      doc.estatus = req.body.estatus;
+    }
+    if (typeof req.body.concepto === 'string' && req.body.concepto.trim()) {
+      doc.payloadCompleto = {
+        ...(doc.payloadCompleto || {}),
+        concepto: req.body.concepto.replace(/[<>]/g, '').trim(),
+      };
+      doc.markModified('payloadCompleto');
+    }
+
+    doc.fechaActualizacion = new Date();
+    await doc.save();
+
+    res.status(200).json({ mensaje: 'Registro de auditoría actualizado.', transaccion: doc });
+  } catch (error) {
+    console.error('Error en updateTransaccionAuditoria:', error);
+    res.status(500).json({ error: 'Error al actualizar la transacción.' });
+  }
+};
+
+// DELETE /api/transacciones/:id -> Borrado lógico en MongoDB (isDeleted: true)
+export const deleteTransaccionAuditoria = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Identificador de transacción inválido.' });
+    }
+
+    const idCuenta = await obtenerIdCuenta(req);
+    const filtro =
+      Number(req.user.isAdmin) === 1
+        ? { _id: id }
+        : { _id: id, $or: [{ cuentaOrigenId: idCuenta }, { cuentaDestinoId: idCuenta }] };
+
+    const doc = await AuditoriaTransaccion.findOneAndUpdate(
+      filtro,
+      { isDeleted: true, fechaActualizacion: new Date() },
+      { new: true }
+    );
+
+    if (!doc) {
+      return res.status(404).json({ error: 'Transacción no encontrada o ya eliminada.' });
+    }
+
+    res.status(200).json({ mensaje: `Transacción ${id} marcada como borrada lógicamente.` });
+  } catch (error) {
+    console.error('Error en deleteTransaccionAuditoria:', error);
+    res.status(500).json({ error: 'Error al eliminar lógicamente la transacción.' });
+  }
+};

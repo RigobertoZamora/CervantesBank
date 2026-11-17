@@ -280,3 +280,32 @@ export const pagarPrestamo = async ({ idPrestamo, monto }) => {
   }
   return data;
 };
+
+// --- ADMIN: MOVIMIENTOS (segunda capa de "Gestionar Cuentas") ---
+
+export const obtenerMovimientosAdmin = async ({ usuarioId, tipo, pagina = 1, limite = 20 } = {}) => {
+  const params = new URLSearchParams({ pagina, limite });
+  if (usuarioId) params.set('usuarioId', usuarioId);
+  if (tipo) params.set('tipo', tipo);
+  const response = await fetch(`${API_URL}/admin-movimientos?${params}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'No se pudieron consultar los movimientos.');
+  }
+  return data;
+};
+
+export const obtenerDetalleMovimientoAdmin = async (id) => {
+  const response = await fetch(`${API_URL}/admin-movimientos/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'No se pudo consultar el detalle del movimiento.');
+  }
+  return data;
+};

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import MainLayout from '../cliente/MainLayout.vue';
+import AdminMovimientosView from './AdminMovimientosView.vue';
 import {
   cerrarSesion,
   obtenerResumenAdmin,
@@ -17,6 +18,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['sesion-cerrada']);
+
+// Segunda capa de Gestionar Cuentas: null = panel principal; { usuarioId, nombre } = movimientos (usuarioId null = generales)
+const movimientos = ref(null);
+const verMovimientos = (usuarioId = null, nombre = '') => {
+  movimientos.value = { usuarioId, nombre };
+};
 
 const cargando = ref(true);
 const cerrando = ref(false);
@@ -121,7 +128,14 @@ const handleLogout = async () => {
       </button>
     </template>
 
-  <section class="dashboard-shell profile-view">
+  <AdminMovimientosView
+    v-if="movimientos"
+    :usuario-id="movimientos.usuarioId"
+    :nombre="movimientos.nombre"
+    @volver="movimientos = null"
+  />
+
+  <section v-else class="dashboard-shell profile-view">
     <!-- Encabezado de Administrador Único -->
     <div class="dashboard-header profile-heading cl-fade-up">
       <div>
@@ -380,9 +394,12 @@ const handleLogout = async () => {
       <!-- Apartado 3: Gestionar Cuentas (PostgreSQL + Redis) -->
       <div class="bank-card profile-card cl-fade-up">
         <span class="hero-eyebrow" style="margin-bottom: 0.35rem">Apartado 3 · PostgreSQL + Redis</span>
-        <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.85rem">
-          Gestionar Cuentas y Desbloqueo Antifraude
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem">
+          <h2 style="font-size: 1.15rem; font-weight: 700">
+            Gestionar Cuentas y Desbloqueo Antifraude
+          </h2>
+          <button type="button" class="btn-chip" @click="verMovimientos()">Ver movimientos generales</button>
+        </div>
 
         <div class="stack-list">
           <div v-for="c in resumen.clientes" :key="`cta-${c.usuario.id}`" class="info-subcard">
@@ -411,6 +428,13 @@ const handleLogout = async () => {
             </div>
 
             <div class="admin-inline-controls">
+              <button
+                type="button"
+                class="btn-chip"
+                @click="verMovimientos(c.usuario.id, `${c.usuario.nombre} ${c.usuario.apellidoUno}`)"
+              >
+                Ver movimientos
+              </button>
               <button
                 v-if="c.usuario.estatus === 1"
                 type="button"

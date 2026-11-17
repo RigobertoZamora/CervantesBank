@@ -20,6 +20,7 @@ import cancelacionRoutes from './routes/cancelacionRoutes.js';
 import transaccionesRoutes from './routes/transaccionesRoutes.js';
 import actividadRoutes from './routes/actividadRoutes.js';
 import pagosPrestamoRoutes from './routes/pagosPrestamoRoutes.js';
+import adminMovimientosRoutes from './routes/adminMovimientosRoutes.js';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ app.use('/api/transferencias', transferenciasRoutes);
 app.use('/api/transacciones', transaccionesRoutes);
 app.use('/api/actividad', actividadRoutes);
 app.use('/api/pagos-prestamo', pagosPrestamoRoutes);
+app.use('/api/admin-movimientos', adminMovimientosRoutes);
 
 const startServer = async () => {
   try {
