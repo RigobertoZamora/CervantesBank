@@ -1,0 +1,351 @@
+:root {
+  --bg-canvas: #161514;
+  --bg-surface: #211f1d;
+  --bg-elevated: #292623;
+  --bg-input: #1a1817;
+  --border-subtle: #33302c;
+  --text-primary: #f5f3f0;
+  --text-secondary: #a6a09a;
+  --accent-orange: #d97757;
+  --accent-orange-hover: #e48566;
+  --accent-orange-soft: rgba(217, 119, 87, 0.12);
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-error: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+/* Barra superior institucional */
+.top-navbar {
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(22, 21, 20, 0.85);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.navbar-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-logo-img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.brand-logo-fallback {
+  height: 38px;
+  width: 38px;
+  border-radius: 10px;
+  background: var(--accent-orange-soft);
+  border: 1px dashed var(--accent-orange);
+  color: var(--accent-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.brand-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.security-tag {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+}
+
+/* Contenedor principal de Landing (2 columnas) */
+.landing-grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+@media (max-width: 880px) {
+  .landing-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1.25rem;
+  }
+}
+
+/* Columna izquierda: Propuesta de valor */
+.hero-eyebrow {
+  display: inline-block;
+  color: var(--accent-orange);
+  background: var(--accent-orange-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  margin-bottom: 1.1rem;
+}
+
+.hero-headline {
+  font-size: 2.45rem;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+}
+
+.hero-headline span {
+  color: var(--accent-orange);
+}
+
+.hero-description {
+  color: var(--text-secondary);
+  font-size: 1.02rem;
+  margin-bottom: 2rem;
+  max-width: 480px;
+}
+
+.trust-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.trust-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.trust-icon {
+  background: var(--accent-orange-soft);
+  color: var(--accent-orange);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.trust-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.trust-text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+}
+
+/* Columna derecha: Tarjeta de acceso */
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-surface);
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: var(--accent-orange);
+  color: #161514;
+}
+
+.bank-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 22px;
+  padding: 1.85rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.field-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.72rem 0.9rem;
+  color: var(--text-primary);
+  font-size: 0.94rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.field-input:focus {
+  border-color: var(--accent-orange);
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--accent-orange);
+  color: #161514;
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.4rem;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-orange-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert-error {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: var(--status-error);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.digital-card-preview {
+  background: linear-gradient(135deg, #2d2520 0%, #1c1a18 100%);
+  border: 1px solid var(--accent-orange);
+  border-radius: 18px;
+  padding: 1.35rem;
+  margin: 1rem 0;
+}
+
+.clabe-box {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-orange);
+  margin: 0.35rem 0 0.9rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+}
+
+.status-pill.ready {
+  background: rgba(74, 222, 128, 0.14);
+  color: var(--status-success);
+}
+
+.status-pill.pending {
+  background: rgba(251, 191, 36, 0.14);
+  color: var(--status-warning);
+}
+
+/* Evita que las columnas del grid o los inputs desborden el ancho de pantalla */
+.landing-grid > * {
+  min-width: 0;
+}
+
+.field-input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Ajuste específico para teléfonos móviles */
+@media (max-width: 540px) {
+  .hero-headline {
+    font-size: 1.85rem;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .security-tag {
+    display: none;
+  }
+
+  .bank-card {
+    padding: 1.35rem;
+  }
+}
