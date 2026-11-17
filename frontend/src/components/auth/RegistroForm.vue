@@ -2,7 +2,6 @@
 import { reactive, ref } from 'vue';
 import { registrarUsuario } from '../../services/api';
 
-// Eventos que este componente puede enviarle a App.vue
 const emit = defineEmits(['ir-a-login']);
 
 const form = reactive({
@@ -11,6 +10,7 @@ const form = reactive({
   apellidoDos: '',
   rfc: '',
   email: '',
+  password: '',
   tipoDocumento: 'INE',
   numeroDocumento: '',
 });
@@ -30,6 +30,7 @@ const handleSubmit = async () => {
       apellidoDos: form.apellidoDos.trim() || null,
       rfc: form.rfc.trim().toUpperCase(),
       email: form.email.trim().toLowerCase(),
+      password: form.password,
       metadatosIdentificacion: {
         tipoDocumento: form.tipoDocumento,
         numeroDocumento: form.numeroDocumento.trim() || 'PENDIENTE_FOLIO',
@@ -46,14 +47,13 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <!-- Vista 1: Comprobante de cuenta creada -->
   <div v-if="resultado" class="bank-card">
     <span class="status-pill ready">● Cuenta activa lista para operar</span>
     <h2 style="margin-top: 0.75rem; font-size: 1.3rem">
       ¡Bienvenido a CervantesBank, {{ resultado.usuario.nombre }}!
     </h2>
     <p style="color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.25rem">
-      Ya puedes iniciar sesión con tu correo y RFC mientras nuestro equipo concluye la verificación de tu identidad.
+      Ya puedes iniciar sesión con tu correo o RFC mientras nuestro equipo concluye la verificación de tu identidad.
     </p>
 
     <div class="digital-card-preview">
@@ -76,17 +76,9 @@ const handleSubmit = async () => {
       </div>
     </div>
 
-    <div
-      style="
-        background: var(--bg-input);
-        padding: 0.85rem;
-        border-radius: 12px;
-        border: 1px solid var(--border-subtle);
-        font-size: 0.82rem;
-      "
-    >
+    <div class="info-subcard">
       <span class="status-pill pending">Verificación de identidad en curso</span>
-      <p style="color: var(--text-secondary); margin-top: 0.45rem">
+      <p style="color: var(--text-secondary); margin-top: 0.45rem; font-size: 0.82rem">
         Tu expediente fue enviado al área de validación ({{ resultado.notificacionAdminKYC.estatusValidacion }}). No bloquea tu acceso.
       </p>
     </div>
@@ -100,7 +92,6 @@ const handleSubmit = async () => {
     </button>
   </div>
 
-  <!-- Vista 2: Formulario de apertura -->
   <form v-else class="bank-card form-grid" @submit.prevent="handleSubmit">
     <div style="margin-bottom: 0.25rem">
       <h2 style="font-size: 1.2rem; font-weight: 700">Abre tu cuenta digital</h2>
@@ -170,6 +161,18 @@ const handleSubmit = async () => {
         class="field-input"
         type="email"
         placeholder="nombre@correo.com"
+        required
+      />
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Contraseña de acceso * (mínimo 8 caracteres)</label>
+      <input
+        v-model="form.password"
+        class="field-input"
+        type="password"
+        minlength="8"
+        placeholder="Crea una contraseña segura"
         required
       />
     </div>

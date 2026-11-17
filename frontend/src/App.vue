@@ -1,22 +1,45 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import BrandShowcase from './components/auth/BrandShowcase.vue';
 import RegistroForm from './components/auth/RegistroForm.vue';
 import LoginView from './components/auth/LoginView.vue';
+import DashboardView from './components/dashboard/DashboardView.vue';
+import { obtenerPerfilSesion } from './services/api';
 
-const vista = ref('registro');
+const vista = ref('login');
 const emailRecienCreado = ref('');
 const logoNoEncontrado = ref(false);
+const sesionActiva = ref(null);
+const verificandoSesion = ref(true);
+
+onMounted(async () => {
+  try {
+    const perfil = await obtenerPerfilSesion();
+    if (perfil?.usuario) {
+      sesionActiva.value = perfil;
+    }
+  } finally {
+    verificandoSesion.value = false;
+  }
+});
 
 const irALoginConCorreo = (email) => {
   emailRecienCreado.value = email;
+  vista.value = 'login';
+};
+
+const manejarLoginExitoso = (datosSesion) => {
+  sesionActiva.value = datosSesion;
+};
+
+const manejarLogout = () => {
+  sesionActiva.value = null;
   vista.value = 'login';
 };
 </script>
 
 <template>
   <div>
-    <!-- Barra superior con espacio reservado para frontend/public/logo.png -->
     <header class="top-navbar">
       <div class="navbar-inner">
         <div class="brand-lockup">
@@ -27,18 +50,25 @@ const irALoginConCorreo = (email) => {
             class="brand-logo-img"
             @error="logoNoEncontrado = true"
           />
-          <div v-else class="brand-logo-fallback" title="Coloca tu imagen en frontend/public/logo.png">
-            CB
-          </div>
+          <div v-else class="brand-logo-fallback">CB</div>
           <span class="brand-name">CervantesBank</span>
         </div>
 
-        <span class="security-tag">● Conexión cifrada · Banca Digital Mexicana</span>
+        <span class="security-tag">● Conexión cifrada · Banca Digital</span>
       </div>
     </header>
 
-    <!-- Landing Page de dos columnas -->
-    <main class="landing-grid">
+    <div v-if="verificandoSesion" class="loading-shell">
+      Verificando sesión segura...
+    </div>
+
+    <DashboardView
+      v-else-if="sesionActiva"
+      :sesion="sesionActiva"
+      @sesion-cerrada="manejarLogout"
+    />
+
+    <main v-else class="landing-grid">
       <BrandShowcase />
 
       <div>
@@ -69,6 +99,7 @@ const irALoginConCorreo = (email) => {
           v-else
           :email-precargado="emailRecienCreado"
           @cambiar-a-registro="vista = 'registro'"
+          @login-exitoso="manejarLoginExitoso"
         />
       </div>
     </main>
